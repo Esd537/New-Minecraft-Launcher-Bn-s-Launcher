@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>BnLauncherSetup</AssemblyName>
+    <Product>Bn's Launcher Setup</Product>
+    <ApplicationIcon>..\Assets\bn-logo.ico</ApplicationIcon>
+    <Version>1.1.1</Version>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\release\BnsLauncher-v1.1.1-win-x64.zip" LogicalName="BnLauncherSetup.Payload.zip" />
+    <EmbeddedResource Include="..\Assets\bn-logo.png" LogicalName="BnLauncherSetup.Branding.BnLogo.png" />
+  </ItemGroup>
+
+</Project>

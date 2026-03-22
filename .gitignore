@@ -1,0 +1,23 @@
+.appdata/
+.codex/
+.dotnet/
+.localappdata/
+.userprofile/
+.vs/
+dist/
+dist-bns/
+dist-final/
+dist-clean/
+release/
+Bn Launcher App*/
+installer/build/
+Bn Launcher App/
+NuGet/
+Bn's Launcher/bin/
+Bn's Launcher/NuGet/
+Bn's Launcher/obj/
+BnLauncherSetup/bin/
+BnLauncherSetup/obj/
+desktop.ini
+*.user
+*.suo

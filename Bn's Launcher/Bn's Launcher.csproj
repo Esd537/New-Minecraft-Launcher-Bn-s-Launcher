@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <RootNamespace>Bn_s_Launcher</RootNamespace>
+    <AssemblyName>BnsLauncher</AssemblyName>
+    <Product>Bn's Launcher</Product>
+    <ApplicationIcon>..\Assets\bn-logo.ico</ApplicationIcon>
+    <StartupObject>Bn_s_Launcher.App</StartupObject>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CmlLib.Core" Version="4.0.6" />
+    <PackageReference Include="CmlLib.Core.Auth.Microsoft" Version="3.3.1" />
+    <PackageReference Include="CmlLib.Core.Installer.Forge" Version="1.1.1" />
+    <PackageReference Include="Optifine.Installer" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\Assets\bn-logo.ico" Link="Assets\bn-logo.ico" />
+    <Resource Include="..\Assets\bn-logo.png" Link="Assets\bn-logo.png" />
+  </ItemGroup>
+
+</Project>
