@@ -41,5 +41,5 @@ Launcher de Minecraft inspirado na ideia de launchers como o Freesm, com visual 
 
 ## Nome da release
 
-- Nome publico da release: `V.Beta.1.1`
+- Nome publico da release: `V.beta.1.1.1`
 - Os nomes dos arquivos continuam em `v1.2.0`
