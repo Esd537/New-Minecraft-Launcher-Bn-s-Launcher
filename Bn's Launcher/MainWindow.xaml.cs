@@ -529,8 +529,8 @@ public partial class MainWindow : Window
         AccentColorTextBox.IsReadOnly = !isCustom;
         AccentColorTextBox.Opacity = isCustom ? 1 : 0.72;
         AccentColorTextBox.ToolTip = isCustom
-            ? "Modo custom: escreva uma cor como #0F6BFF."
-            : "Escolha o preset acima para trocar o tema do launcher.";
+            ? "Modo custom: escreva uma cor ou clique no quadrado para escolher."
+            : "Use os botoes de tema ou clique no quadrado para abrir o seletor de cor.";
     }
 
     private void UpdateVersionSourceUi()
@@ -740,6 +740,49 @@ public partial class MainWindow : Window
         }
 
         ApplyThemePresetToProfile(_currentProfile, overwriteAccentColor: true);
+        UpdateThemeEditorState();
+        ApplyEditorsToCurrentModels();
+        UpdatePreview();
+    }
+
+    private void AccentSwatchBorder_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_isHydratingUi || _isInitializingWindow || _currentProfile is null || AccentColorTextBox is null)
+        {
+            return;
+        }
+
+        using var dialog = new WinForms.ColorDialog
+        {
+            AnyColor = true,
+            FullOpen = true,
+            SolidColorOnly = false,
+            Color = System.Drawing.Color.FromArgb(
+                CreateAccentBrush(ReadText(AccentColorTextBox, _currentProfile.AccentColor)).Color.R,
+                CreateAccentBrush(ReadText(AccentColorTextBox, _currentProfile.AccentColor)).Color.G,
+                CreateAccentBrush(ReadText(AccentColorTextBox, _currentProfile.AccentColor)).Color.B)
+        };
+
+        if (dialog.ShowDialog() != WinForms.DialogResult.OK)
+        {
+            return;
+        }
+
+        var hex = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+        _currentProfile.ThemePreset = LauncherProfile.ThemePresetCustom;
+        _currentProfile.AccentColor = hex;
+
+        _isHydratingUi = true;
+        try
+        {
+            SelectComboValue(ThemePresetComboBox, LauncherProfile.ThemePresetCustom);
+            AccentColorTextBox.Text = hex;
+        }
+        finally
+        {
+            _isHydratingUi = false;
+        }
+
         UpdateThemeEditorState();
         ApplyEditorsToCurrentModels();
         UpdatePreview();

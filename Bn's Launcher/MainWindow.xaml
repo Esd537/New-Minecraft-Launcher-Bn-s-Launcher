@@ -105,6 +105,73 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="DarkScrollThumbStyle" TargetType="Thumb">
+            <Setter Property="Background" Value="#FF363636" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Margin="2" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DarkScrollRepeatButtonStyle" TargetType="RepeatButton">
+            <Setter Property="Background" Value="#FF090B0A" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="{TemplateBinding Background}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DarkVerticalScrollBarStyle" TargetType="ScrollBar">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Background" Value="#FF090B0A" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="{TemplateBinding Background}"
+                              Width="{TemplateBinding Width}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="16" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="16" />
+                            </Grid.RowDefinitions>
+                            <RepeatButton Grid.Row="0"
+                                          Command="ScrollBar.LineUpCommand"
+                                          Style="{StaticResource DarkScrollRepeatButtonStyle}" />
+                            <Track x:Name="PART_Track"
+                                   Grid.Row="1"
+                                   IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand"
+                                                  Style="{StaticResource DarkScrollRepeatButtonStyle}" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource DarkScrollThumbStyle}" />
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand"
+                                                  Style="{StaticResource DarkScrollRepeatButtonStyle}" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                            <RepeatButton Grid.Row="2"
+                                          Command="ScrollBar.LineDownCommand"
+                                          Style="{StaticResource DarkScrollRepeatButtonStyle}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -247,20 +314,28 @@
                         <Border Grid.Row="3"
                                 Style="{StaticResource CardStyle}"
                                 Margin="0,0,0,12"
-                                VerticalAlignment="Top">
-                            <StackPanel>
-                                <TextBlock Text="Resumo" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="18" FontWeight="SemiBold" />
-                                <TextBlock Text="Perfil" Foreground="#8BEBD5BB" Margin="0,16,0,4" />
-                                <TextBlock x:Name="SummaryProfileValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Instancia" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryInstanceValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Versao" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryVersionValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Memoria" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryMemoryValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Pasta" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryTargetValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" TextWrapping="Wrap" />
-                            </StackPanel>
+                                VerticalAlignment="Stretch">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          Background="#FF090B0A"
+                                          Padding="0">
+                                <ScrollViewer.Resources>
+                                    <Style TargetType="ScrollBar" BasedOn="{StaticResource DarkVerticalScrollBarStyle}" />
+                                </ScrollViewer.Resources>
+                                <StackPanel Margin="0,0,6,0">
+                                    <TextBlock Text="Resumo" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="Perfil" Foreground="#8BEBD5BB" Margin="0,16,0,4" />
+                                    <TextBlock x:Name="SummaryProfileValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Instancia" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryInstanceValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Versao" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryVersionValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Memoria" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryMemoryValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Pasta" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryTargetValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </ScrollViewer>
                         </Border>
 
                         <Button Grid.Row="4" x:Name="LaunchButton" Content="Iniciar Minecraft" Click="LaunchButton_Click" Style="{StaticResource LaunchButtonStyle}" />
@@ -361,6 +436,7 @@
                                                   Style="{StaticResource FieldStyle}"
                                                   Padding="10,8"
                                                   Margin="0,0,0,14"
+                                                  Visibility="Collapsed"
                                                   SelectionChanged="ThemePresetComboBox_SelectionChanged">
                                             <ComboBoxItem Content="preto + azul" />
                                             <ComboBoxItem Content="preto + branco" />
@@ -371,16 +447,24 @@
                                             <Button Content="Azul forte" Tag="preto + azul" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
                                             <Button Content="Branco forte" Tag="preto + branco" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
                                             <Button Content="Vermelho forte" Tag="preto + vermelho" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
-                                            <Button Content="Custom" Tag="custom" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
                                         </WrapPanel>
-                                        <TextBlock Text="Cor de destaque" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
+                                        <TextBlock Text="Cor custom" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
                                         <Grid Margin="0,0,0,14">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="56" />
                                             </Grid.ColumnDefinitions>
                                             <TextBox x:Name="AccentColorTextBox" Style="{StaticResource FieldStyle}" Padding="12,10" Margin="0" TextChanged="AnySettingChanged" />
-                                            <Border x:Name="AccentSwatchBorder" Grid.Column="1" Margin="12,0,0,0" CornerRadius="14" BorderBrush="#26FFFFFF" BorderThickness="1" Background="#0F6BFF" />
+                                            <Border x:Name="AccentSwatchBorder"
+                                                    Grid.Column="1"
+                                                    Margin="12,0,0,0"
+                                                    CornerRadius="14"
+                                                    BorderBrush="#26FFFFFF"
+                                                    BorderThickness="1"
+                                                    Background="#0F6BFF"
+                                                    Cursor="Hand"
+                                                    ToolTip="Clique para abrir o seletor de cor."
+                                                    MouseLeftButtonUp="AccentSwatchBorder_MouseLeftButtonUp" />
                                         </Grid>
                                         <TextBlock Text="Imagem de fundo" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
                                         <Grid>
