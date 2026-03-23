@@ -149,8 +149,7 @@ public partial class MainWindow : Window
             InstanceNameTextBox.Text = instance.Name;
             InstanceNotesTextBox.Text = instance.Notes;
             SelectComboValue(VersionSourceComboBox, instance.VersionSource);
-            VersionIdTextBox.Text = instance.VersionId;
-            CustomVersionIdTextBox.Text = instance.CustomVersionId;
+            VersionIdTextBox.Text = ResolveRequestedVersionId(instance);
             SelectComboValue(VersionTypeComboBox, instance.VersionType);
             SelectComboValue(LoaderKindComboBox, instance.LoaderKind);
             SelectComboValue(GameDirectoryModeComboBox, instance.GameDirectoryMode);
@@ -196,8 +195,19 @@ public partial class MainWindow : Window
             _currentInstance.Name = ReadText(InstanceNameTextBox, "Instancia principal");
             _currentInstance.Notes = ReadText(InstanceNotesTextBox, "Sem observacoes.");
             _currentInstance.VersionSource = NormalizeVersionSource(ReadComboText(VersionSourceComboBox, LauncherInstance.VersionSourceCatalog));
-            _currentInstance.VersionId = ReadText(VersionIdTextBox, LauncherInstance.DefaultVersionId);
-            _currentInstance.CustomVersionId = ReadText(CustomVersionIdTextBox);
+            var displayedVersionId = ReadText(
+                VersionIdTextBox,
+                IsCustomVersionMode(_currentInstance)
+                    ? _currentInstance.CustomVersionId
+                    : LauncherInstance.DefaultVersionId);
+            if (IsCustomVersionMode(_currentInstance))
+            {
+                _currentInstance.CustomVersionId = displayedVersionId;
+            }
+            else
+            {
+                _currentInstance.VersionId = displayedVersionId;
+            }
             _currentInstance.VersionType = ReadComboText(VersionTypeComboBox, "release");
             _currentInstance.LoaderKind = ReadComboText(LoaderKindComboBox, LauncherInstance.LoaderKindVanilla);
             _currentInstance.ForgeVersion = ReadSelectedComboValue(ForgeVersionComboBox);
@@ -504,7 +514,6 @@ public partial class MainWindow : Window
         if (!_isViewReady ||
             VersionSourceComboBox is null ||
             VersionIdTextBox is null ||
-            CustomVersionIdTextBox is null ||
             CustomVersionHintTextBlock is null ||
             VersionTypeComboBox is null ||
             OpenVersionsButton is null)
@@ -515,18 +524,29 @@ public partial class MainWindow : Window
         var instance = _currentInstance ?? _settings.GetSelectedInstance();
         var isCustom = string.Equals(instance.VersionSource, LauncherInstance.VersionSourceCustom, StringComparison.OrdinalIgnoreCase);
 
+        _isHydratingUi = true;
+        try
+        {
+            VersionIdTextBox.Text = isCustom ? instance.CustomVersionId : instance.VersionId;
+        }
+        finally
+        {
+            _isHydratingUi = false;
+        }
+
         VersionIdTextBox.IsReadOnly = isCustom;
-        VersionIdTextBox.Opacity = isCustom ? 0.56 : 1;
-        CustomVersionIdTextBox.IsReadOnly = !isCustom;
-        CustomVersionIdTextBox.Opacity = isCustom ? 1 : 0.56;
+        VersionIdTextBox.Opacity = 1;
         VersionTypeComboBox.IsEnabled = !isCustom;
         VersionTypeComboBox.Opacity = isCustom ? 0.56 : 1;
         OpenVersionsButton.IsEnabled = true;
         OpenVersionsButton.Opacity = 1;
-        OpenVersionsButton.Content = isCustom ? "Versoes locais" : "Catalogo de versoes";
+        OpenVersionsButton.Content = isCustom ? "Catalogo local" : "Catalogo de versoes";
+        VersionIdTextBox.ToolTip = isCustom
+            ? "Selecione uma versao local pelo catalogo local."
+            : null;
 
         CustomVersionHintTextBlock.Text = isCustom
-            ? "Use o botao ao lado para ler a pasta versions da instancia ativa, ou digite o ID exato manualmente."
+            ? "Use o catalogo local para ler a pasta versions da pasta do jogo ativa e escolher uma versao local."
             : "Use o catalogo para baixar e selecionar versoes oficiais da Mojang.";
     }
 
@@ -839,7 +859,7 @@ public partial class MainWindow : Window
             var localVersionId = PickLocalVersionId(_currentInstance);
             if (!string.IsNullOrWhiteSpace(localVersionId))
             {
-                CustomVersionIdTextBox.Text = localVersionId;
+                VersionIdTextBox.Text = localVersionId;
                 SetStatus($"Versao local selecionada: {localVersionId}.");
             }
 
@@ -1367,7 +1387,7 @@ public partial class MainWindow : Window
         var requestedVersionId = ResolveRequestedVersionId(instance);
         if (string.IsNullOrWhiteSpace(requestedVersionId))
         {
-            throw new InvalidOperationException("Digite o ID da versao custom/local antes de iniciar.");
+            throw new InvalidOperationException("Escolha uma versao no catalogo local antes de iniciar.");
         }
 
         var versionJsonPath = GetVersionJsonPath(instance, requestedVersionId);
@@ -1641,7 +1661,7 @@ public partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(requestedVersionId))
         {
             var hint = IsCustomVersionMode(instance)
-                ? "Digite o ID da versao custom/local para a instancia ativa."
+                ? "Escolha uma versao no catalogo local para a instancia ativa."
                 : "Escolha primeiro uma versao do Minecraft para a instancia ativa.";
             WpfMessageBox.Show(hint, "Bn's Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
             return;

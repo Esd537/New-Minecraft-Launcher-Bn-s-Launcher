@@ -432,12 +432,6 @@
                                                     Style="{StaticResource ActionButtonStyle}"
                                                     Margin="10,0,0,0" />
                                         </Grid>
-                                        <TextBlock Text="ID da versao custom/local" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
-                                        <TextBox x:Name="CustomVersionIdTextBox"
-                                                 Style="{StaticResource FieldStyle}"
-                                                 Padding="12,10"
-                                                 Margin="0,0,0,14"
-                                                 TextChanged="AnySettingChanged" />
                                         <TextBlock Text="Tipo da versao" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
                                         <ComboBox x:Name="VersionTypeComboBox"
                                                   Style="{StaticResource FieldStyle}"
