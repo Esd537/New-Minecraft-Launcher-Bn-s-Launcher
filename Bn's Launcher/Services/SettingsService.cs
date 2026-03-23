@@ -135,12 +135,31 @@ public sealed class SettingsService
 
         foreach (var instance in settings.Instances)
         {
+            if (string.IsNullOrWhiteSpace(instance.VersionSource))
+            {
+                instance.VersionSource = LauncherInstance.VersionSourceCatalog;
+            }
+
+            if (string.IsNullOrWhiteSpace(instance.GameDirectoryMode))
+            {
+                instance.GameDirectoryMode = LauncherInstance.GameDirectoryModeSeparate;
+            }
+
             if (string.IsNullOrWhiteSpace(instance.LoaderKind))
             {
                 instance.LoaderKind = LauncherInstance.LoaderKindVanilla;
             }
 
-            if (string.IsNullOrWhiteSpace(instance.GameDirectory))
+            if (string.IsNullOrWhiteSpace(instance.VersionId))
+            {
+                instance.VersionId = LauncherInstance.DefaultVersionId;
+            }
+
+            if (string.Equals(instance.GameDirectoryMode, LauncherInstance.GameDirectoryModeShared, StringComparison.OrdinalIgnoreCase))
+            {
+                instance.GameDirectory = LauncherSettings.SharedMinecraftDirectory;
+            }
+            else if (string.IsNullOrWhiteSpace(instance.GameDirectory))
             {
                 instance.GameDirectory = LauncherSettings.BuildGameDirectory(instance.Name);
             }

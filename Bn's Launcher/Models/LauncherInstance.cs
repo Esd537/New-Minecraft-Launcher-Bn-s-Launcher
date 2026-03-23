@@ -8,6 +8,10 @@ public sealed class LauncherInstance
     public const string LoaderKindForge = "forge";
     public const string LoaderKindOptifine = "optifine";
     public const string LoaderKindForgeOptifine = "forge+optifine";
+    public const string GameDirectoryModeSeparate = "instancia separada";
+    public const string GameDirectoryModeShared = ".minecraft padrao";
+    public const string VersionSourceCatalog = "catalogo oficial";
+    public const string VersionSourceCustom = "custom/local";
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
@@ -17,6 +21,10 @@ public sealed class LauncherInstance
 
     public string VersionType { get; set; } = "release";
 
+    public string VersionSource { get; set; } = VersionSourceCatalog;
+
+    public string CustomVersionId { get; set; } = string.Empty;
+
     public string LoaderKind { get; set; } = LoaderKindVanilla;
 
     public string ForgeVersion { get; set; } = string.Empty;
@@ -24,6 +32,8 @@ public sealed class LauncherInstance
     public string OptifineVersion { get; set; } = string.Empty;
 
     public string GameDirectory { get; set; } = LauncherSettings.DefaultGameDirectory;
+
+    public string GameDirectoryMode { get; set; } = GameDirectoryModeSeparate;
 
     public string JavaPath { get; set; } = string.Empty;
 
@@ -42,6 +52,12 @@ public sealed class LauncherInstance
     public bool UsesForge => LoaderKind == LoaderKindForge || LoaderKind == LoaderKindForgeOptifine;
 
     public bool UsesOptifine => LoaderKind == LoaderKindOptifine || LoaderKind == LoaderKindForgeOptifine;
+
+    public bool UsesSharedMinecraftDirectory => GameDirectoryMode == GameDirectoryModeShared;
+
+    public bool UsesCustomVersion => VersionSource == VersionSourceCustom && !string.IsNullOrWhiteSpace(CustomVersionId);
+
+    public string RequestedVersionId => UsesCustomVersion ? CustomVersionId.Trim() : VersionId.Trim();
 
     public string LoaderDisplayName
     {
@@ -72,10 +88,13 @@ public sealed class LauncherInstance
             Name = name,
             VersionId = VersionId,
             VersionType = VersionType,
+            VersionSource = VersionSource,
+            CustomVersionId = CustomVersionId,
             LoaderKind = LoaderKind,
             ForgeVersion = ForgeVersion,
             OptifineVersion = OptifineVersion,
-            GameDirectory = LauncherSettings.BuildGameDirectory(name),
+            GameDirectoryMode = GameDirectoryMode,
+            GameDirectory = LauncherSettings.ResolveGameDirectory(name, GameDirectoryMode),
             JavaPath = JavaPath,
             KeepLauncherOpenWhilePlaying = KeepLauncherOpenWhilePlaying,
             Notes = Notes

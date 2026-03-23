@@ -148,9 +148,12 @@ public partial class MainWindow : Window
             InstancesListBox.SelectedItem = instance;
             InstanceNameTextBox.Text = instance.Name;
             InstanceNotesTextBox.Text = instance.Notes;
+            SelectComboValue(VersionSourceComboBox, instance.VersionSource);
             VersionIdTextBox.Text = instance.VersionId;
+            CustomVersionIdTextBox.Text = instance.CustomVersionId;
             SelectComboValue(VersionTypeComboBox, instance.VersionType);
             SelectComboValue(LoaderKindComboBox, instance.LoaderKind);
+            SelectComboValue(GameDirectoryModeComboBox, instance.GameDirectoryMode);
             GameDirectoryTextBox.Text = instance.GameDirectory;
             JavaPathTextBox.Text = instance.JavaPath;
             SelectBuildValue(ForgeVersionComboBox, instance.ForgeVersion);
@@ -162,6 +165,8 @@ public partial class MainWindow : Window
         }
 
         RefreshInstanceListView();
+        UpdateVersionSourceUi();
+        UpdateGameDirectoryModeUi();
         UpdateLoaderUi();
         _ = RefreshLoaderCatalogAsync();
     }
@@ -186,14 +191,19 @@ public partial class MainWindow : Window
 
         if (_currentInstance is not null)
         {
+            var previousName = _currentInstance.Name;
+            var previousSeparateDirectory = LauncherSettings.BuildGameDirectory(previousName);
             _currentInstance.Name = ReadText(InstanceNameTextBox, "Instancia principal");
             _currentInstance.Notes = ReadText(InstanceNotesTextBox, "Sem observacoes.");
+            _currentInstance.VersionSource = NormalizeVersionSource(ReadComboText(VersionSourceComboBox, LauncherInstance.VersionSourceCatalog));
             _currentInstance.VersionId = ReadText(VersionIdTextBox, LauncherInstance.DefaultVersionId);
+            _currentInstance.CustomVersionId = ReadText(CustomVersionIdTextBox);
             _currentInstance.VersionType = ReadComboText(VersionTypeComboBox, "release");
             _currentInstance.LoaderKind = ReadComboText(LoaderKindComboBox, LauncherInstance.LoaderKindVanilla);
             _currentInstance.ForgeVersion = ReadSelectedComboValue(ForgeVersionComboBox);
             _currentInstance.OptifineVersion = ReadSelectedComboValue(OptifineVersionComboBox);
-            _currentInstance.GameDirectory = ReadText(GameDirectoryTextBox, LauncherSettings.DefaultGameDirectory);
+            _currentInstance.GameDirectoryMode = NormalizeGameDirectoryMode(ReadComboText(GameDirectoryModeComboBox, LauncherInstance.GameDirectoryModeSeparate));
+            _currentInstance.GameDirectory = ResolveEditedGameDirectory(_currentInstance, previousSeparateDirectory);
             _currentInstance.JavaPath = ReadText(JavaPathTextBox);
             _settings.SelectedInstanceId = _currentInstance.Id;
         }
@@ -307,6 +317,64 @@ public partial class MainWindow : Window
         };
     }
 
+    private static string NormalizeVersionSource(string value)
+    {
+        return value.Trim().ToLowerInvariant() switch
+        {
+            LauncherInstance.VersionSourceCustom => LauncherInstance.VersionSourceCustom,
+            _ => LauncherInstance.VersionSourceCatalog
+        };
+    }
+
+    private static string NormalizeGameDirectoryMode(string value)
+    {
+        return value.Trim().ToLowerInvariant() switch
+        {
+            LauncherInstance.GameDirectoryModeShared => LauncherInstance.GameDirectoryModeShared,
+            _ => LauncherInstance.GameDirectoryModeSeparate
+        };
+    }
+
+    private string ResolveEditedGameDirectory(LauncherInstance instance, string previousSeparateDirectory)
+    {
+        if (string.Equals(instance.GameDirectoryMode, LauncherInstance.GameDirectoryModeShared, StringComparison.OrdinalIgnoreCase))
+        {
+            return LauncherSettings.SharedMinecraftDirectory;
+        }
+
+        var typedDirectory = ReadText(GameDirectoryTextBox, LauncherSettings.BuildGameDirectory(instance.Name));
+        if (string.IsNullOrWhiteSpace(typedDirectory) ||
+            string.Equals(typedDirectory, LauncherSettings.SharedMinecraftDirectory, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(typedDirectory, previousSeparateDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            return LauncherSettings.BuildGameDirectory(instance.Name);
+        }
+
+        return typedDirectory;
+    }
+
+    private static bool IsCustomVersionMode(LauncherInstance instance)
+    {
+        return string.Equals(instance.VersionSource, LauncherInstance.VersionSourceCustom, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ResolveRequestedVersionId(LauncherInstance instance)
+    {
+        return IsCustomVersionMode(instance)
+            ? instance.CustomVersionId.Trim()
+            : instance.VersionId.Trim();
+    }
+
+    private static string ResolveDisplayVersionLabel(LauncherInstance instance)
+    {
+        var versionId = ResolveRequestedVersionId(instance);
+        return IsCustomVersionMode(instance)
+            ? string.IsNullOrWhiteSpace(versionId)
+                ? "Custom local"
+                : $"Custom {versionId}"
+            : versionId;
+    }
+
     private static string ResolveAccentColorForTheme(string themePreset)
     {
         return NormalizeThemePreset(themePreset) switch
@@ -411,6 +479,69 @@ public partial class MainWindow : Window
             : "Escolha o preset acima para trocar o tema do launcher.";
     }
 
+    private void UpdateVersionSourceUi()
+    {
+        if (!_isViewReady ||
+            VersionSourceComboBox is null ||
+            VersionIdTextBox is null ||
+            CustomVersionIdTextBox is null ||
+            CustomVersionHintTextBlock is null ||
+            VersionTypeComboBox is null ||
+            OpenVersionsButton is null)
+        {
+            return;
+        }
+
+        var instance = _currentInstance ?? _settings.GetSelectedInstance();
+        var isCustom = string.Equals(instance.VersionSource, LauncherInstance.VersionSourceCustom, StringComparison.OrdinalIgnoreCase);
+
+        VersionIdTextBox.IsReadOnly = isCustom;
+        VersionIdTextBox.Opacity = isCustom ? 0.56 : 1;
+        CustomVersionIdTextBox.IsReadOnly = !isCustom;
+        CustomVersionIdTextBox.Opacity = isCustom ? 1 : 0.56;
+        VersionTypeComboBox.IsEnabled = !isCustom;
+        VersionTypeComboBox.Opacity = isCustom ? 0.56 : 1;
+        OpenVersionsButton.IsEnabled = !isCustom;
+        OpenVersionsButton.Opacity = isCustom ? 0.56 : 1;
+
+        CustomVersionHintTextBlock.Text = isCustom
+            ? "Digite o ID exato de uma versao local que ja exista na pasta versions da instancia ativa."
+            : "Use o catalogo para baixar e selecionar versoes oficiais da Mojang.";
+    }
+
+    private void UpdateGameDirectoryModeUi()
+    {
+        if (!_isViewReady ||
+            GameDirectoryModeComboBox is null ||
+            GameDirectoryTextBox is null ||
+            GameDirectoryBrowseButton is null ||
+            GameDirectoryModeHintTextBlock is null)
+        {
+            return;
+        }
+
+        var instance = _currentInstance ?? _settings.GetSelectedInstance();
+        var isShared = string.Equals(instance.GameDirectoryMode, LauncherInstance.GameDirectoryModeShared, StringComparison.OrdinalIgnoreCase);
+
+        _isHydratingUi = true;
+        try
+        {
+            GameDirectoryTextBox.Text = instance.GameDirectory;
+        }
+        finally
+        {
+            _isHydratingUi = false;
+        }
+
+        GameDirectoryTextBox.IsReadOnly = isShared;
+        GameDirectoryTextBox.Opacity = isShared ? 0.72 : 1;
+        GameDirectoryBrowseButton.IsEnabled = !isShared;
+        GameDirectoryBrowseButton.Opacity = isShared ? 0.56 : 1;
+        GameDirectoryModeHintTextBlock.Text = isShared
+            ? "A instancia vai usar a mesma pasta .minecraft do launcher oficial."
+            : "Cada instancia usa a propria pasta, ideal para separar mods, saves e caches.";
+    }
+
     private static string BuildUniqueName(string prefix, System.Collections.Generic.IEnumerable<string> existingNames)
     {
         var used = existingNames.Where(name => !string.IsNullOrWhiteSpace(name)).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -432,6 +563,8 @@ public partial class MainWindow : Window
 
         ApplyEditorsToCurrentModels();
         UpdateAccountUi();
+        UpdateVersionSourceUi();
+        UpdateGameDirectoryModeUi();
         UpdateLoaderUi();
         if (ReferenceEquals(sender, AccentColorTextBox))
         {
@@ -475,6 +608,32 @@ public partial class MainWindow : Window
         UpdateLoaderUi();
         UpdatePreview();
         await RefreshLoaderCatalogAsync();
+    }
+
+    private async void VersionSourceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isHydratingUi || _isInitializingWindow)
+        {
+            return;
+        }
+
+        ApplyEditorsToCurrentModels();
+        UpdateVersionSourceUi();
+        UpdateLoaderUi();
+        UpdatePreview();
+        await RefreshLoaderCatalogAsync(true);
+    }
+
+    private void GameDirectoryModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isHydratingUi || _isInitializingWindow)
+        {
+            return;
+        }
+
+        ApplyEditorsToCurrentModels();
+        UpdateGameDirectoryModeUi();
+        UpdatePreview();
     }
 
     private void ThemePresetComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -654,6 +813,16 @@ public partial class MainWindow : Window
     private void OpenVersionsButton_Click(object sender, RoutedEventArgs e)
     {
         ApplyEditorsToCurrentModels();
+        if (_currentInstance is not null && IsCustomVersionMode(_currentInstance))
+        {
+            WpfMessageBox.Show(
+                "No modo custom/local voce digita o ID da versao manualmente. Troque para catalogo oficial se quiser usar a lista da Mojang.",
+                "Bn's Launcher",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
         var dialog = new VersionBrowserWindow(_currentInstance?.VersionId)
         {
             Owner = this
@@ -765,6 +934,17 @@ public partial class MainWindow : Window
 
     private void GameDirectoryBrowseButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_currentInstance is not null &&
+            string.Equals(_currentInstance.GameDirectoryMode, LauncherInstance.GameDirectoryModeShared, StringComparison.OrdinalIgnoreCase))
+        {
+            WpfMessageBox.Show(
+                "No modo .minecraft padrao a pasta do jogo e fixa. Troque para instancia separada se quiser escolher outra pasta.",
+                "Bn's Launcher",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
         using var dialog = new WinForms.FolderBrowserDialog
         {
             Description = "Escolha a pasta da instancia",
@@ -802,6 +982,15 @@ public partial class MainWindow : Window
         ApplyEditorsToCurrentModels();
         var instance = _currentInstance ?? _settings.GetSelectedInstance();
         var baseVersion = instance.VersionId?.Trim();
+
+        if (IsCustomVersionMode(instance))
+        {
+            _forgeBuilds = [];
+            _optifineBuilds = [];
+            BindLoaderSelections(forceSelectionRefresh);
+            UpdateLoaderUi();
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(baseVersion))
         {
@@ -959,6 +1148,7 @@ public partial class MainWindow : Window
     {
         if (_isInitializingWindow || !_isViewReady ||
             LoaderKindComboBox is null ||
+            RefreshLoadersButton is null ||
             ForgeVersionComboBox is null ||
             OptifineVersionComboBox is null ||
             ForgeVersionMetaTextBlock is null ||
@@ -969,13 +1159,30 @@ public partial class MainWindow : Window
         }
 
         var instance = _currentInstance ?? _settings.GetSelectedInstance();
+        var isCustom = IsCustomVersionMode(instance);
         var forgeEnabled = instance.UsesForge;
         var optifineEnabled = instance.UsesOptifine;
 
+        LoaderKindComboBox.IsEnabled = !isCustom;
+        LoaderKindComboBox.Opacity = isCustom ? 0.56 : 1;
+        RefreshLoadersButton.IsEnabled = !isCustom;
+        RefreshLoadersButton.Opacity = isCustom ? 0.56 : 1;
         ForgeVersionComboBox.IsEnabled = forgeEnabled && _forgeBuilds.Count > 0;
         OptifineVersionComboBox.IsEnabled = optifineEnabled && _optifineBuilds.Count > 0;
         ForgeVersionComboBox.Opacity = forgeEnabled ? 1 : 0.6;
         OptifineVersionComboBox.Opacity = optifineEnabled ? 1 : 0.6;
+
+        if (isCustom)
+        {
+            ForgeVersionComboBox.IsEnabled = false;
+            OptifineVersionComboBox.IsEnabled = false;
+            ForgeVersionComboBox.Opacity = 0.56;
+            OptifineVersionComboBox.Opacity = 0.56;
+            ForgeVersionMetaTextBlock.Text = "Desativado no modo custom/local.";
+            OptifineVersionMetaTextBlock.Text = "Desativado no modo custom/local.";
+            LoaderStatusTextBlock.Text = "Modo custom/local: o launcher usa exatamente o ID digitado, sem baixar pelo catalogo.";
+            return;
+        }
 
         ForgeVersionMetaTextBlock.Text = forgeEnabled
             ? ForgeVersionComboBox.SelectedItem is ModLoaderBuildEntry forgeBuild
@@ -1021,16 +1228,35 @@ public partial class MainWindow : Window
     private static string BuildLaunchSignature(LauncherInstance instance)
     {
         return string.Join("|",
-            instance.VersionId.Trim(),
+            instance.VersionSource.Trim(),
+            ResolveRequestedVersionId(instance),
             instance.VersionType.Trim(),
             instance.LoaderKind.Trim(),
             instance.ForgeVersion.Trim(),
-            instance.OptifineVersion.Trim());
+            instance.OptifineVersion.Trim(),
+            instance.GameDirectory.Trim());
     }
 
     private static string GetVersionJsonPath(LauncherInstance instance, string versionId)
     {
         return Path.Combine(instance.GameDirectory, "versions", versionId, $"{versionId}.json");
+    }
+
+    private static void EnsureCustomVersionIsAvailable(LauncherInstance instance)
+    {
+        var requestedVersionId = ResolveRequestedVersionId(instance);
+        if (string.IsNullOrWhiteSpace(requestedVersionId))
+        {
+            throw new InvalidOperationException("Digite o ID da versao custom/local antes de iniciar.");
+        }
+
+        var versionJsonPath = GetVersionJsonPath(instance, requestedVersionId);
+        if (!File.Exists(versionJsonPath))
+        {
+            throw new FileNotFoundException(
+                $"Nao encontrei a versao custom/local `{requestedVersionId}` em `{instance.GameDirectory}\\versions`. Use .minecraft padrao ou copie essa versao para a pasta da instancia.",
+                versionJsonPath);
+        }
     }
 
     private bool CanReusePreparedVersion(LauncherInstance instance, string signature)
@@ -1108,6 +1334,15 @@ public partial class MainWindow : Window
         var signature = BuildLaunchSignature(instance);
         if (!forceInstall && CanReusePreparedVersion(instance, signature))
         {
+            return instance.PreparedVersionId;
+        }
+
+        if (IsCustomVersionMode(instance))
+        {
+            EnsureCustomVersionIsAvailable(instance);
+            instance.PreparedSignature = signature;
+            instance.PreparedVersionId = ResolveRequestedVersionId(instance);
+            instance.PreparedAt = DateTime.Now;
             return instance.PreparedVersionId;
         }
 
@@ -1281,10 +1516,14 @@ public partial class MainWindow : Window
         ApplyEditorsToCurrentModels();
         var profile = _currentProfile ?? _settings.GetSelectedProfile();
         var instance = _currentInstance ?? _settings.GetSelectedInstance();
+        var requestedVersionId = ResolveRequestedVersionId(instance);
 
-        if (string.IsNullOrWhiteSpace(instance.VersionId))
+        if (string.IsNullOrWhiteSpace(requestedVersionId))
         {
-            WpfMessageBox.Show("Escolha primeiro uma versao do Minecraft para a instancia ativa.", "Bn's Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+            var hint = IsCustomVersionMode(instance)
+                ? "Digite o ID da versao custom/local para a instancia ativa."
+                : "Escolha primeiro uma versao do Minecraft para a instancia ativa.";
+            WpfMessageBox.Show(hint, "Bn's Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -1318,7 +1557,7 @@ public partial class MainWindow : Window
                 }
             }));
 
-            SetStatus($"Preparando {instance.VersionId}...");
+            SetStatus($"Preparando {requestedVersionId}...");
             var resolvedVersionId = await PrepareLaunchVersionAsync(launcher, instance, fileProgress, byteProgress);
 
             var session = await ResolveLaunchSessionAsync(profile);
@@ -1373,10 +1612,14 @@ public partial class MainWindow : Window
                 ? $"{Environment.NewLine}{Environment.NewLine}Dica: confirme o login da conta Microsoft e tente novamente."
                 : string.Empty;
             var loaderHint = instance.LoaderKind != LauncherInstance.LoaderKindVanilla
+                             && !IsCustomVersionMode(instance)
                 ? $"{Environment.NewLine}{Environment.NewLine}Dica: clique em `Atualizar` na area de loaders e confira se a build escolhida existe para {instance.VersionId}."
                 : string.Empty;
+            var customHint = IsCustomVersionMode(instance)
+                ? $"{Environment.NewLine}{Environment.NewLine}Dica: confira se a versao `{requestedVersionId}` existe em `{instance.GameDirectory}\\versions`."
+                : string.Empty;
             WpfMessageBox.Show(
-                $"Falha ao iniciar o Minecraft.{Environment.NewLine}{Environment.NewLine}{ex.Message}{javaHint}{accountHint}{loaderHint}",
+                $"Falha ao iniciar o Minecraft.{Environment.NewLine}{Environment.NewLine}{ex.Message}{javaHint}{accountHint}{loaderHint}{customHint}",
                 "Bn's Launcher",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
@@ -1610,9 +1853,15 @@ public partial class MainWindow : Window
         var accentBrush = CreateAccentBrush(profile.AccentColor);
         var displayName = profile.GetDisplayName();
         var accountLabel = profile.AccountMode == LauncherProfile.AccountModeMicrosoft ? "microsoft" : "offline";
-        var versionBadge = instance.LoaderKind == LauncherInstance.LoaderKindVanilla
-            ? instance.VersionId
-            : $"{instance.LoaderDisplayName} {instance.VersionId}";
+        var versionLabel = ResolveDisplayVersionLabel(instance);
+        var versionBadge = IsCustomVersionMode(instance)
+            ? versionLabel
+            : instance.LoaderKind == LauncherInstance.LoaderKindVanilla
+                ? versionLabel
+                : $"{instance.LoaderDisplayName} {versionLabel}";
+        var directoryLabel = string.Equals(instance.GameDirectoryMode, LauncherInstance.GameDirectoryModeShared, StringComparison.OrdinalIgnoreCase)
+            ? $"{instance.GameDirectory} (.minecraft)"
+            : instance.GameDirectory;
 
         MemoryValueTextBlock.Text = $"{profile.MemoryMb} MB";
         HeaderProfileBadgeTextBlock.Text = profile.Name;
@@ -1623,9 +1872,11 @@ public partial class MainWindow : Window
         SummaryInstanceValueTextBlock.Text = instance.Name;
         SummaryVersionValueTextBlock.Text = versionBadge;
         SummaryMemoryValueTextBlock.Text = $"{profile.MemoryMb / 1024d:0.0} GB";
-        SummaryTargetValueTextBlock.Text = instance.GameDirectory;
+        SummaryTargetValueTextBlock.Text = directoryLabel;
         PreviewProfileTextBlock.Text = displayName;
-        PreviewStatusTextBlock.Text = $"{instance.LoaderDisplayName} | {instance.VersionId} | {accountLabel} | {profile.MemoryMb} MB";
+        PreviewStatusTextBlock.Text = IsCustomVersionMode(instance)
+            ? $"Custom/local | {versionLabel} | {accountLabel} | {profile.MemoryMb} MB"
+            : $"{instance.LoaderDisplayName} | {versionLabel} | {accountLabel} | {profile.MemoryMb} MB";
 
         ApplyThemePalette(profile, accentBrush);
         LaunchButton.Background = accentBrush;

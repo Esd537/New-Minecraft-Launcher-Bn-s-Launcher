@@ -10,6 +10,9 @@ public sealed class LauncherSettings
     public static string InstancesRootDirectory =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Bn Project", "Instances");
 
+    public static string SharedMinecraftDirectory =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft");
+
     public static string DefaultGameDirectory => BuildGameDirectory("Instancia principal");
 
     public List<LauncherProfile> Profiles { get; set; } = [];
@@ -78,6 +81,13 @@ public sealed class LauncherSettings
     {
         var safeName = SanitizeFolderName(instanceName);
         return Path.Combine(InstancesRootDirectory, safeName);
+    }
+
+    public static string ResolveGameDirectory(string instanceName, string directoryMode)
+    {
+        return string.Equals(directoryMode, LauncherInstance.GameDirectoryModeShared, StringComparison.OrdinalIgnoreCase)
+            ? SharedMinecraftDirectory
+            : BuildGameDirectory(instanceName);
     }
 
     private static string SanitizeFolderName(string value)

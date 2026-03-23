@@ -400,6 +400,20 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Margin="0,0,12,0">
                                         <TextBlock Text="Configuracoes da instancia ativa" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="20" FontWeight="SemiBold" />
+                                        <TextBlock Text="Origem da versao" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,18,0,8" />
+                                        <ComboBox x:Name="VersionSourceComboBox"
+                                                  Style="{StaticResource FieldStyle}"
+                                                  Padding="10,8"
+                                                  Margin="0,0,0,8"
+                                                  SelectionChanged="VersionSourceComboBox_SelectionChanged">
+                                            <ComboBoxItem Content="catalogo oficial" />
+                                            <ComboBoxItem Content="custom/local" />
+                                        </ComboBox>
+                                        <TextBlock x:Name="CustomVersionHintTextBlock"
+                                                   Foreground="{DynamicResource ThemeMutedTextBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,12"
+                                                   Text="Use o catalogo para baixar versoes oficiais ou troque para custom/local para iniciar um ID que ja exista na pasta versions." />
                                         <TextBlock Text="Versao do Minecraft" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,18,0,8" />
                                         <Grid Margin="0,0,0,14">
                                             <Grid.ColumnDefinitions>
@@ -411,12 +425,19 @@
                                                      Padding="12,10"
                                                      Margin="0"
                                                      TextChanged="AnySettingChanged" />
-                                            <Button Grid.Column="1"
+                                            <Button x:Name="OpenVersionsButton"
+                                                    Grid.Column="1"
                                                     Content="Catalogo de versoes"
                                                     Click="OpenVersionsButton_Click"
                                                     Style="{StaticResource ActionButtonStyle}"
                                                     Margin="10,0,0,0" />
                                         </Grid>
+                                        <TextBlock Text="ID da versao custom/local" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
+                                        <TextBox x:Name="CustomVersionIdTextBox"
+                                                 Style="{StaticResource FieldStyle}"
+                                                 Padding="12,10"
+                                                 Margin="0,0,0,14"
+                                                 TextChanged="AnySettingChanged" />
                                         <TextBlock Text="Tipo da versao" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
                                         <ComboBox x:Name="VersionTypeComboBox"
                                                   Style="{StaticResource FieldStyle}"
@@ -444,7 +465,8 @@
                                                 <ComboBoxItem Content="optifine" />
                                                 <ComboBoxItem Content="forge+optifine" />
                                             </ComboBox>
-                                            <Button Grid.Column="1"
+                                            <Button x:Name="RefreshLoadersButton"
+                                                    Grid.Column="1"
                                                     Content="Atualizar"
                                                     Click="RefreshLoadersButton_Click"
                                                     Style="{StaticResource ActionButtonStyle}"
@@ -480,14 +502,28 @@
                                                    Text="Depois do primeiro download, o launcher reutiliza a versao preparada para abrir mais rapido." />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0">
-                                        <TextBlock Text="Pasta do jogo" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,18,0,8" />
+                                        <TextBlock Text="Modo da pasta do jogo" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,18,0,8" />
+                                        <ComboBox x:Name="GameDirectoryModeComboBox"
+                                                  Style="{StaticResource FieldStyle}"
+                                                  Padding="10,8"
+                                                  Margin="0,0,0,8"
+                                                  SelectionChanged="GameDirectoryModeComboBox_SelectionChanged">
+                                            <ComboBoxItem Content="instancia separada" />
+                                            <ComboBoxItem Content=".minecraft padrao" />
+                                        </ComboBox>
+                                        <TextBlock x:Name="GameDirectoryModeHintTextBlock"
+                                                   Foreground="{DynamicResource ThemeMutedTextBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,12"
+                                                   Text="Instancia separada cria uma pasta so para esta instancia. O modo .minecraft usa a pasta padrao do launcher oficial." />
+                                        <TextBlock Text="Pasta do jogo" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
                                         <Grid Margin="0,0,0,14">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBox x:Name="GameDirectoryTextBox" Style="{StaticResource FieldStyle}" Padding="12,10" Margin="0" TextChanged="AnySettingChanged" />
-                                            <Button Grid.Column="1" Content="Escolher" Click="GameDirectoryBrowseButton_Click" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" />
+                                            <Button x:Name="GameDirectoryBrowseButton" Grid.Column="1" Content="Escolher" Click="GameDirectoryBrowseButton_Click" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" />
                                         </Grid>
                                         <TextBlock Text="Java (opcional)" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
                                         <Grid>
