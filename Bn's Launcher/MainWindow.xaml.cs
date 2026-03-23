@@ -96,7 +96,7 @@ public partial class MainWindow : Window
         _settings.EnsureDefaults();
         ProfilesListBox.ItemsSource = _settings.Profiles;
         InstancesListBox.ItemsSource = _settings.Instances;
-        FooterPathTextBlock.Text = _settingsService.SettingsPath;
+        FooterPathTextBlock.Text = MaskSensitivePath(_settingsService.SettingsPath);
         LoadSelectedProfile(_settings.SelectedProfileId);
         LoadSelectedInstance(_settings.SelectedInstanceId);
         LaunchProgressBar.Value = 0;
@@ -403,6 +403,30 @@ public partial class MainWindow : Window
                 ? "Custom local"
                 : $"Custom {versionId}"
             : versionId;
+    }
+
+    private static string MaskSensitivePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var masked = path;
+        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (!string.IsNullOrWhiteSpace(userProfile) &&
+            masked.StartsWith(userProfile, StringComparison.OrdinalIgnoreCase))
+        {
+            masked = $"C:\\Users\\***{masked[userProfile.Length..]}";
+        }
+
+        var currentUserName = Environment.UserName;
+        if (!string.IsNullOrWhiteSpace(currentUserName))
+        {
+            masked = masked.Replace($@"\Users\{currentUserName}\", @"\Users\***\", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return masked;
     }
 
     private static string ResolveAccentColorForTheme(string themePreset)
@@ -1960,7 +1984,7 @@ public partial class MainWindow : Window
 
         StatusTextBlock.Text = _settings.LastStatus;
         LastLaunchValueTextBlock.Text = _settings.LastLaunchAt.HasValue ? _settings.LastLaunchAt.Value.ToString("dd/MM/yyyy HH:mm") : "Nenhum launch ainda";
-        FooterPathTextBlock.Text = _settingsService.SettingsPath;
+        FooterPathTextBlock.Text = MaskSensitivePath(_settingsService.SettingsPath);
     }
 
     private void UpdatePreview()
@@ -2002,6 +2026,7 @@ public partial class MainWindow : Window
         var directoryLabel = string.Equals(instance.GameDirectoryMode, LauncherInstance.GameDirectoryModeShared, StringComparison.OrdinalIgnoreCase)
             ? $"{instance.GameDirectory} (.minecraft)"
             : instance.GameDirectory;
+        var maskedDirectoryLabel = MaskSensitivePath(directoryLabel);
 
         MemoryValueTextBlock.Text = $"{profile.MemoryMb} MB";
         HeaderProfileBadgeTextBlock.Text = profile.Name;
@@ -2012,7 +2037,8 @@ public partial class MainWindow : Window
         SummaryInstanceValueTextBlock.Text = instance.Name;
         SummaryVersionValueTextBlock.Text = versionBadge;
         SummaryMemoryValueTextBlock.Text = $"{profile.MemoryMb / 1024d:0.0} GB";
-        SummaryTargetValueTextBlock.Text = directoryLabel;
+        SummaryTargetValueTextBlock.Text = maskedDirectoryLabel;
+        SummaryTargetValueTextBlock.ToolTip = maskedDirectoryLabel;
         PreviewProfileTextBlock.Text = displayName;
         PreviewStatusTextBlock.Text = IsCustomVersionMode(instance)
             ? $"Custom/local | {versionLabel} | {accountLabel} | {profile.MemoryMb} MB"

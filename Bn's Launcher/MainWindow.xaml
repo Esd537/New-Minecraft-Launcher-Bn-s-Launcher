@@ -216,11 +216,22 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Margin="24">
-                        <TextBlock Text="Bn's Launcher" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="32" FontWeight="Bold" FontFamily="Bahnschrift" />
-                        <TextBlock Text="Launcher de Minecraft com perfis, instancias separadas, conta offline ou Microsoft e painel de noticias." Foreground="{DynamicResource ThemeMutedTextBrush}" TextWrapping="Wrap" Margin="0,10,0,24" />
+                    <Grid Grid.Column="0" Margin="24">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                        <Border Style="{StaticResource CardStyle}">
+                        <TextBlock Grid.Row="0" Text="Bn's Launcher" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="32" FontWeight="Bold" FontFamily="Bahnschrift" />
+                        <TextBlock Grid.Row="1" Text="Launcher de Minecraft com perfis, instancias separadas, conta offline ou Microsoft e painel de noticias." Foreground="{DynamicResource ThemeMutedTextBrush}" TextWrapping="Wrap" Margin="0,10,0,24" />
+
+                        <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Border x:Name="PreviewBackgroundLayer" CornerRadius="18" />
                                 <Border Background="#8A07120F" CornerRadius="18" />
@@ -233,36 +244,41 @@
                             </Grid>
                         </Border>
 
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Resumo" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="18" FontWeight="SemiBold" />
-                                <TextBlock Text="Perfil" Foreground="#8BEBD5BB" Margin="0,16,0,4" />
-                                <TextBlock x:Name="SummaryProfileValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Instancia" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryInstanceValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Versao" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryVersionValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Memoria" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryMemoryValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                                <TextBlock Text="Pasta" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="SummaryTargetValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" TextWrapping="Wrap" />
-                                <TextBlock Text="Ultimo launch" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
-                                <TextBlock x:Name="LastLaunchValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
-                            </StackPanel>
-                        </Border>
+                        <ScrollViewer Grid.Row="3"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Margin="0,0,0,12">
+                            <Border Style="{StaticResource CardStyle}" Margin="0">
+                                <StackPanel>
+                                    <TextBlock Text="Resumo" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="Perfil" Foreground="#8BEBD5BB" Margin="0,16,0,4" />
+                                    <TextBlock x:Name="SummaryProfileValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Instancia" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryInstanceValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Versao" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryVersionValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Memoria" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryMemoryValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock Text="Pasta" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="SummaryTargetValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" TextWrapping="Wrap" />
+                                    <TextBlock Text="Ultimo launch" Foreground="#8BEBD5BB" Margin="0,14,0,4" />
+                                    <TextBlock x:Name="LastLaunchValueTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </ScrollViewer>
 
-                        <Button x:Name="LaunchButton" Content="Iniciar Minecraft" Click="LaunchButton_Click" Style="{StaticResource LaunchButtonStyle}" />
-                        <Button Content="Abrir pasta da instancia" Click="OpenGameFolderButton_Click" Style="{StaticResource ActionButtonStyle}" />
-                        <ProgressBar x:Name="LaunchProgressBar"
+                        <Button Grid.Row="4" x:Name="LaunchButton" Content="Iniciar Minecraft" Click="LaunchButton_Click" Style="{StaticResource LaunchButtonStyle}" />
+                        <Button Grid.Row="5" Content="Abrir pasta da instancia" Click="OpenGameFolderButton_Click" Style="{StaticResource ActionButtonStyle}" />
+                        <ProgressBar Grid.Row="6"
+                                     x:Name="LaunchProgressBar"
                                      Height="8"
-                                     Margin="0,6,0,0"
+                                     Margin="0,2,0,0"
                                      Minimum="0"
                                      Maximum="100"
                                      Value="0"
                                      Foreground="#0F6BFF"
                                      Background="#22000000" />
-                        <TextBlock x:Name="StatusTextBlock" Foreground="#E2F3E7D9" TextWrapping="Wrap" Margin="0,10,0,0" />
-                    </StackPanel>
+                        <TextBlock Grid.Row="7" x:Name="StatusTextBlock" Foreground="#E2F3E7D9" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    </Grid>
 
                     <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="24">
