@@ -4,46 +4,48 @@ Launcher de Minecraft em WPF inspirado na ideia de launchers como o Freesm, com 
 
 ## O que ja esta funcionando
 
-- Launcher Windows com interface customizavel, fullscreen `F11` e barra propria.
+- Launcher Windows com interface customizavel, fullscreen `F11` e visual mais limpo.
 - Escolha de versoes `release`, `snapshot`, `old_beta` e `old_alpha`.
 - Download da versao oficial direto do catalogo da Mojang.
 - Launch do Minecraft com sessao offline ou conta Microsoft e argumentos JVM otimizados por padrao.
 - Loaders por instancia: `vanilla`, `forge`, `optifine` e `forge + optifine`.
 - Perfis separados para nome, memoria, argumentos, cor e imagem de fundo.
 - Temas prontos `preto + azul`, `preto + branco`, `preto + vermelho` e modo `custom`.
+- Troca de tema e alteracoes do perfil sem crash ao salvar o preview.
 - Logo propria `BN` aplicada no app e no instalador.
 - Instancias com pastas separadas por padrao.
 - Painel de noticias com feed oficial e fallback offline.
+- Instalador com escolha de pasta, atalhos e abertura automatica no final.
 
 ## Onde esta o app
 
 Pasta final pronta para abrir:
 
 ```text
-Bn Launcher App Final v1.1.1
+Bn Launcher App v1.2.0
 ```
 
 Executavel principal:
 
 ```text
-Bn Launcher App Final v1.1.1\Bn's Launcher.exe
+Bn Launcher App v1.2.0\Bn's Launcher.exe
 ```
 
 Pacote para GitHub Release:
 
 ```text
-release\BnsLauncher-v1.1.1-win-x64.zip
+release\BnsLauncher-v1.2.0-win-x64.zip
 ```
 
 Instalador unico para GitHub Release:
 
 ```text
-release\BnsLauncher-Setup-v1.1.1.exe
+release\BnsLauncher-Setup-v1.2.0.exe
 ```
 
 ## Como abrir
 
-1. Entre na pasta `Bn Launcher App Final v1.1.1`.
+1. Entre na pasta `Bn Launcher App v1.2.0`.
 2. Clique duas vezes em `Bn's Launcher.exe`.
 3. No app, escolha `offline` ou `microsoft`.
 4. Escolha o tema do launcher.
@@ -63,7 +65,7 @@ Se o Java automatico nao funcionar em alguma maquina:
 ## Como rodar pelo terminal
 
 ```powershell
-& ".\Bn Launcher App Final v1.1.1\Bn's Launcher.exe"
+& ".\Bn Launcher App v1.2.0\Bn's Launcher.exe"
 ```
 
 ## Como compilar de novo
@@ -107,9 +109,9 @@ git push -u origin main
 2. Clique em `Releases`.
 3. Clique em `Draft a new release`.
 4. Crie a tag, por exemplo `v1.0.0`.
-5. Em `Attach binaries`, envie `release\BnsLauncher-Setup-v1.1.1.exe` se quiser postar so o instalador.
-6. Se preferir versao portatil, envie `release\BnsLauncher-v1.1.1-win-x64.zip`.
-7. Cole as notas da release de `release\RELEASE_NOTES_v1.1.1.md`.
+5. Em `Attach binaries`, envie `release\BnsLauncher-Setup-v1.2.0.exe` se quiser postar so o instalador.
+6. Se preferir versao portatil, envie `release\BnsLauncher-v1.2.0-win-x64.zip`.
+7. Cole as notas da release de `release\RELEASE_NOTES_v1.2.0.md`.
 8. Clique em `Publish release`.
 
 ## Observacao

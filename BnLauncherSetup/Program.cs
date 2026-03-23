@@ -11,11 +11,17 @@ internal static class Program
 {
     private const string AppName = "Bn's Launcher";
     private const string AppPublisher = "BN Project";
-    private const string AppVersion = "1.1.1";
+    private const string AppVersion = "1.2.0";
     private const string AppFolderName = "BnsLauncher";
     private const string PayloadResourceName = "BnLauncherSetup.Payload.zip";
     private const string BrandingResourceName = "BnLauncherSetup.Branding.BnLogo.png";
     private const string UninstallRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\BnsLauncher";
+
+    private static string DefaultInstallDirectory =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Programs",
+            AppFolderName);
 
     [STAThread]
     private static void Main()
@@ -31,19 +37,18 @@ internal static class Program
         return Image.FromStream(stream);
     }
 
-    private static InstallerResult Install(IProgress<InstallerProgress> progress)
+    private static InstallerResult Install(IProgress<InstallerProgress> progress, InstallOptions options)
     {
-        progress.Report(new InstallerProgress("Preparando pasta de instalacao...", 15));
+        var destinationDirectory = Path.GetFullPath(options.InstallDirectory.Trim());
+        if (string.IsNullOrWhiteSpace(destinationDirectory))
+        {
+            throw new InvalidOperationException("Escolha uma pasta valida para instalar o launcher.");
+        }
 
-        var destinationDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Programs",
-            AppFolderName);
-
+        progress.Report(new InstallerProgress("Preparando pasta de instalacao...", 12));
         Directory.CreateDirectory(destinationDirectory);
 
-        progress.Report(new InstallerProgress("Extraindo arquivos do launcher...", 45));
-
+        progress.Report(new InstallerProgress("Extraindo arquivos do launcher...", 42));
         using (var payloadStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(PayloadResourceName)
                ?? throw new InvalidOperationException("Nao foi possivel localizar os arquivos internos do instalador."))
         {
@@ -56,9 +61,9 @@ internal static class Program
             throw new FileNotFoundException("O executavel principal nao foi encontrado apos a instalacao.", executablePath);
         }
 
-        progress.Report(new InstallerProgress("Criando atalhos...", 70));
+        progress.Report(new InstallerProgress("Configurando atalhos e desinstalador...", 72));
         var uninstallPath = WriteUninstallScript(destinationDirectory);
-        CreateShortcuts(executablePath, destinationDirectory, uninstallPath);
+        CreateShortcuts(executablePath, destinationDirectory, uninstallPath, options);
 
         progress.Report(new InstallerProgress("Registrando o app no Windows...", 88));
         RegisterWindowsApp(destinationDirectory, executablePath, uninstallPath);
@@ -87,7 +92,7 @@ internal static class Program
         key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
     }
 
-    private static void CreateShortcuts(string executablePath, string workingDirectory, string uninstallPath)
+    private static void CreateShortcuts(string executablePath, string workingDirectory, string uninstallPath, InstallOptions options)
     {
         var desktopShortcutPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
@@ -97,14 +102,29 @@ internal static class Program
             Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
             "Programs",
             AppName);
-        Directory.CreateDirectory(startMenuFolder);
 
         var startMenuShortcutPath = Path.Combine(startMenuFolder, $"{AppName}.lnk");
         var uninstallShortcutPath = Path.Combine(startMenuFolder, "Desinstalar Bn's Launcher.lnk");
 
-        CreateShortcut(desktopShortcutPath, executablePath, workingDirectory, executablePath);
-        CreateShortcut(startMenuShortcutPath, executablePath, workingDirectory, executablePath);
-        CreateShortcut(uninstallShortcutPath, uninstallPath, Path.GetDirectoryName(uninstallPath)!, executablePath);
+        if (options.CreateDesktopShortcut)
+        {
+            CreateShortcut(desktopShortcutPath, executablePath, workingDirectory, executablePath);
+        }
+        else
+        {
+            DeleteFileIfExists(desktopShortcutPath);
+        }
+
+        if (options.CreateStartMenuShortcut)
+        {
+            Directory.CreateDirectory(startMenuFolder);
+            CreateShortcut(startMenuShortcutPath, executablePath, workingDirectory, executablePath);
+            CreateShortcut(uninstallShortcutPath, uninstallPath, Path.GetDirectoryName(uninstallPath)!, executablePath);
+        }
+        else
+        {
+            TryDeleteDirectory(startMenuFolder);
+        }
     }
 
     private static void CreateShortcut(string shortcutPath, string targetPath, string workingDirectory, string iconPath)
@@ -125,11 +145,13 @@ internal static class Program
     private static string WriteUninstallScript(string destinationDirectory)
     {
         var uninstallPath = Path.Combine(destinationDirectory, "Uninstall Bn's Launcher.cmd");
-        var uninstallScript = """
+        var escapedDirectory = destinationDirectory.Replace("\"", "\"\"");
+        var uninstallScript = $$"""
 @echo off
 setlocal
+set "TARGET={{escapedDirectory}}"
 taskkill /IM "Bn's Launcher.exe" /F >nul 2>nul
-rmdir /S /Q "%LOCALAPPDATA%\Programs\BnsLauncher"
+rmdir /S /Q "%TARGET%"
 rmdir /S /Q "%APPDATA%\Microsoft\Windows\Start Menu\Programs\Bn's Launcher" >nul 2>nul
 del "%USERPROFILE%\Desktop\Bn's Launcher.lnk" >nul 2>nul
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BnsLauncher" /f >nul 2>nul
@@ -141,9 +163,31 @@ pause
         return uninstallPath;
     }
 
+    private static void DeleteFileIfExists(string path)
+    {
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, recursive: true);
+        }
+    }
+
     private sealed record InstallerProgress(string Message, int Percent);
 
     private sealed record InstallerResult(string InstallDirectory, string ExecutablePath, string UninstallPath);
+
+    private sealed record InstallOptions(
+        string InstallDirectory,
+        bool CreateDesktopShortcut,
+        bool CreateStartMenuShortcut,
+        bool LaunchAfterInstall);
 
     private sealed class InstallerForm : Form
     {
@@ -151,16 +195,19 @@ pause
         private readonly ProgressBar _progressBar;
         private readonly Button _installButton;
         private readonly Button _launchButton;
-        private readonly Label _pathValueLabel;
+        private readonly TextBox _installPathTextBox;
+        private readonly CheckBox _desktopShortcutCheckBox;
+        private readonly CheckBox _startMenuShortcutCheckBox;
+        private readonly CheckBox _launchAfterInstallCheckBox;
         private InstallerResult? _result;
 
         public InstallerForm()
         {
             SuspendLayout();
             Text = $"{AppName} Setup";
-            BackColor = Color.FromArgb(9, 9, 11);
+            BackColor = Color.FromArgb(9, 11, 17);
             ForeColor = Color.FromArgb(245, 245, 245);
-            ClientSize = new Size(760, 420);
+            ClientSize = new Size(860, 520);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
@@ -169,7 +216,7 @@ pause
             var leftPanel = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 250,
+                Width = 280,
                 BackColor = Color.Black
             };
 
@@ -178,59 +225,127 @@ pause
                 Image = LoadBrandImage(),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Dock = DockStyle.Fill,
-                Padding = new Padding(36)
+                Padding = new Padding(42)
             };
             leftPanel.Controls.Add(logoPicture);
 
             var titleLabel = new Label
             {
                 Text = "Instalador oficial",
-                Font = new Font("Bahnschrift", 24, FontStyle.Bold),
+                Font = new Font("Bahnschrift", 28, FontStyle.Bold),
                 ForeColor = Color.FromArgb(248, 248, 248),
                 AutoSize = true,
-                Location = new Point(280, 36)
+                Location = new Point(310, 32)
             };
 
             var subtitleLabel = new Label
             {
-                Text = "Bn's Launcher com Forge, OptiFine, tema custom e login Microsoft.",
-                Font = new Font("Segoe UI", 11, FontStyle.Regular),
-                ForeColor = Color.FromArgb(194, 202, 214),
+                Text = "Escolha a pasta, ative atalhos e instale o launcher com Forge, OptiFine, conta Microsoft e temas customizaveis.",
+                Font = new Font("Segoe UI", 10, FontStyle.Regular),
+                ForeColor = Color.FromArgb(188, 197, 214),
                 AutoSize = false,
-                Size = new Size(430, 44),
-                Location = new Point(280, 82)
+                Size = new Size(510, 56),
+                Location = new Point(310, 80)
             };
 
             var pathTitleLabel = new Label
             {
                 Text = "Pasta de instalacao",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.FromArgb(170, 208, 255),
+                ForeColor = Color.FromArgb(108, 164, 255),
                 AutoSize = true,
-                Location = new Point(280, 146)
+                Location = new Point(310, 150)
             };
 
-            _pathValueLabel = new Label
+            _installPathTextBox = new TextBox
             {
-                Text = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Programs",
-                    AppFolderName),
+                Text = DefaultInstallDirectory,
                 Font = new Font("Consolas", 10, FontStyle.Regular),
-                ForeColor = Color.FromArgb(238, 238, 238),
-                AutoSize = false,
-                Size = new Size(430, 52),
-                Location = new Point(280, 174)
+                BackColor = Color.FromArgb(17, 22, 31),
+                ForeColor = Color.FromArgb(244, 244, 244),
+                BorderStyle = BorderStyle.FixedSingle,
+                Location = new Point(310, 178),
+                Size = new Size(392, 28)
             };
+
+            var browseButton = new Button
+            {
+                Text = "Buscar pasta",
+                BackColor = Color.FromArgb(20, 24, 34),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Location = new Point(714, 176),
+                Size = new Size(108, 32)
+            };
+            browseButton.FlatAppearance.BorderColor = Color.FromArgb(70, 110, 255);
+            browseButton.Click += BrowseButton_Click;
+
+            var optionsCard = new Panel
+            {
+                BackColor = Color.FromArgb(14, 18, 26),
+                Location = new Point(310, 226),
+                Size = new Size(512, 150)
+            };
+
+            var optionsTitleLabel = new Label
+            {
+                Text = "Opcoes de instalacao",
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.FromArgb(248, 248, 248),
+                AutoSize = true,
+                Location = new Point(18, 16)
+            };
+
+            var optionsHintLabel = new Label
+            {
+                Text = "Marque o que voce quer criar junto com o launcher.",
+                Font = new Font("Segoe UI", 9, FontStyle.Regular),
+                ForeColor = Color.FromArgb(176, 184, 196),
+                AutoSize = true,
+                Location = new Point(18, 40)
+            };
+
+            _desktopShortcutCheckBox = new CheckBox
+            {
+                Text = "Criar atalho na Area de Trabalho",
+                Checked = true,
+                AutoSize = true,
+                ForeColor = Color.FromArgb(238, 238, 238),
+                Location = new Point(22, 74)
+            };
+
+            _startMenuShortcutCheckBox = new CheckBox
+            {
+                Text = "Criar atalho no Menu Iniciar",
+                Checked = true,
+                AutoSize = true,
+                ForeColor = Color.FromArgb(238, 238, 238),
+                Location = new Point(22, 102)
+            };
+
+            _launchAfterInstallCheckBox = new CheckBox
+            {
+                Text = "Abrir o launcher automaticamente ao terminar",
+                Checked = true,
+                AutoSize = true,
+                ForeColor = Color.FromArgb(238, 238, 238),
+                Location = new Point(22, 130)
+            };
+
+            optionsCard.Controls.Add(optionsTitleLabel);
+            optionsCard.Controls.Add(optionsHintLabel);
+            optionsCard.Controls.Add(_desktopShortcutCheckBox);
+            optionsCard.Controls.Add(_startMenuShortcutCheckBox);
+            optionsCard.Controls.Add(_launchAfterInstallCheckBox);
 
             var notesLabel = new Label
             {
-                Text = "O instalador cria atalho na Area de Trabalho, registra o app no Windows e deixa o launcher pronto para abrir.",
-                Font = new Font("Segoe UI", 10, FontStyle.Regular),
-                ForeColor = Color.FromArgb(186, 186, 186),
+                Text = "O instalador registra o app no Windows, cria desinstalador e permite atualizar por cima sem perder a pasta escolhida.",
+                Font = new Font("Segoe UI", 9, FontStyle.Regular),
+                ForeColor = Color.FromArgb(180, 180, 180),
                 AutoSize = false,
-                Size = new Size(430, 60),
-                Location = new Point(280, 236)
+                Size = new Size(512, 46),
+                Location = new Point(310, 390)
             };
 
             _statusLabel = new Label
@@ -239,13 +354,13 @@ pause
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(248, 248, 248),
                 AutoSize = true,
-                Location = new Point(280, 304)
+                Location = new Point(310, 442)
             };
 
             _progressBar = new ProgressBar
             {
-                Location = new Point(280, 332),
-                Size = new Size(430, 14),
+                Location = new Point(310, 470),
+                Size = new Size(512, 14),
                 Style = ProgressBarStyle.Continuous,
                 Value = 0
             };
@@ -256,8 +371,8 @@ pause
                 BackColor = Color.FromArgb(15, 107, 255),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(280, 364),
-                Size = new Size(160, 36)
+                Location = new Point(310, 492),
+                Size = new Size(170, 34)
             };
             _installButton.FlatAppearance.BorderSize = 0;
             _installButton.Click += InstallButton_Click;
@@ -268,8 +383,8 @@ pause
                 BackColor = Color.FromArgb(20, 20, 24),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(452, 364),
-                Size = new Size(140, 36),
+                Location = new Point(492, 492),
+                Size = new Size(150, 34),
                 Enabled = false
             };
             _launchButton.FlatAppearance.BorderColor = Color.FromArgb(70, 110, 255);
@@ -281,8 +396,8 @@ pause
                 BackColor = Color.FromArgb(20, 20, 24),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(604, 364),
-                Size = new Size(106, 36)
+                Location = new Point(654, 492),
+                Size = new Size(168, 34)
             };
             closeButton.FlatAppearance.BorderColor = Color.FromArgb(70, 70, 70);
             closeButton.Click += (_, _) => Close();
@@ -291,7 +406,9 @@ pause
             Controls.Add(titleLabel);
             Controls.Add(subtitleLabel);
             Controls.Add(pathTitleLabel);
-            Controls.Add(_pathValueLabel);
+            Controls.Add(_installPathTextBox);
+            Controls.Add(browseButton);
+            Controls.Add(optionsCard);
             Controls.Add(notesLabel);
             Controls.Add(_statusLabel);
             Controls.Add(_progressBar);
@@ -302,6 +419,20 @@ pause
             ResumeLayout(false);
         }
 
+        private void BrowseButton_Click(object? sender, EventArgs e)
+        {
+            using var dialog = new FolderBrowserDialog
+            {
+                Description = "Escolha a pasta onde o launcher sera instalado.",
+                SelectedPath = _installPathTextBox.Text.Trim()
+            };
+
+            if (dialog.ShowDialog(this) == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+            {
+                _installPathTextBox.Text = dialog.SelectedPath;
+            }
+        }
+
         private async void InstallButton_Click(object? sender, EventArgs e)
         {
             _installButton.Enabled = false;
@@ -309,16 +440,22 @@ pause
 
             try
             {
+                var options = BuildInstallOptions();
                 var progress = new Progress<InstallerProgress>(value =>
                 {
                     _statusLabel.Text = value.Message;
                     _progressBar.Value = Math.Max(0, Math.Min(100, value.Percent));
                 });
 
-                _result = await Task.Run(() => Install(progress));
+                _result = await Task.Run(() => Install(progress, options));
                 _statusLabel.Text = "Instalado com sucesso. O app ja aparece no Windows.";
                 _progressBar.Value = 100;
                 _launchButton.Enabled = true;
+
+                if (options.LaunchAfterInstall)
+                {
+                    LaunchInstalledApp();
+                }
 
                 MessageBox.Show(
                     $"{AppName} instalado com sucesso em:{Environment.NewLine}{_result.InstallDirectory}",
@@ -341,7 +478,25 @@ pause
             }
         }
 
+        private InstallOptions BuildInstallOptions()
+        {
+            var installDirectory = string.IsNullOrWhiteSpace(_installPathTextBox.Text)
+                ? DefaultInstallDirectory
+                : _installPathTextBox.Text.Trim();
+
+            return new InstallOptions(
+                installDirectory,
+                _desktopShortcutCheckBox.Checked,
+                _startMenuShortcutCheckBox.Checked,
+                _launchAfterInstallCheckBox.Checked);
+        }
+
         private void LaunchButton_Click(object? sender, EventArgs e)
+        {
+            LaunchInstalledApp();
+        }
+
+        private void LaunchInstalledApp()
         {
             if (_result is null)
             {

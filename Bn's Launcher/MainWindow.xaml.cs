@@ -24,6 +24,7 @@ using WpfComboBox = System.Windows.Controls.ComboBox;
 using WpfMessageBox = System.Windows.MessageBox;
 using WpfOpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using WpfPoint = System.Windows.Point;
+using WpfButton = System.Windows.Controls.Button;
 using WpfTextBox = System.Windows.Controls.TextBox;
 using MediaColor = System.Windows.Media.Color;
 using MediaColorConverter = System.Windows.Media.ColorConverter;
@@ -486,6 +487,32 @@ public partial class MainWindow : Window
         if (_currentProfile is null)
         {
             return;
+        }
+
+        ApplyThemePresetToProfile(_currentProfile, overwriteAccentColor: true);
+        UpdateThemeEditorState();
+        ApplyEditorsToCurrentModels();
+        UpdatePreview();
+    }
+
+    private void ThemeQuickButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isHydratingUi || _isInitializingWindow || _currentProfile is null || sender is not WpfButton button)
+        {
+            return;
+        }
+
+        var preset = NormalizeThemePreset(button.Tag?.ToString() ?? LauncherProfile.ThemePresetBlue);
+        _currentProfile.ThemePreset = preset;
+
+        _isHydratingUi = true;
+        try
+        {
+            SelectComboValue(ThemePresetComboBox, preset);
+        }
+        finally
+        {
+            _isHydratingUi = false;
         }
 
         ApplyThemePresetToProfile(_currentProfile, overwriteAccentColor: true);
@@ -1365,7 +1392,7 @@ public partial class MainWindow : Window
             MinimumRamMb = Math.Min(1024, profile.MemoryMb),
             FullScreen = profile.FullScreen,
             GameLauncherName = "BnLauncher",
-            GameLauncherVersion = "1.1.1"
+            GameLauncherVersion = "1.2.0"
         };
 
         if (!string.IsNullOrWhiteSpace(instance.JavaPath))
@@ -1629,8 +1656,8 @@ public partial class MainWindow : Window
 
         var color = accentBrush.Color;
         PreviewBackgroundLayer.Background = new LinearGradientBrush(
-            MediaColor.FromArgb(255, (byte)Math.Min(255, color.R + 18), (byte)Math.Min(255, color.G + 14), (byte)Math.Min(255, color.B + 14)),
-            MediaColor.FromArgb(255, 7, 18, 14),
+            MediaColor.FromArgb(255, (byte)Math.Min(255, color.R + 16), (byte)Math.Min(255, color.G + 12), (byte)Math.Min(255, color.B + 18)),
+            MediaColor.FromArgb(255, 10, 14, 22),
             new WpfPoint(0, 0),
             new WpfPoint(1, 1));
     }
@@ -1651,18 +1678,18 @@ public partial class MainWindow : Window
     {
         var accentColor = accentBrush.Color;
         var preset = NormalizeThemePreset(profile.ThemePreset);
-        var accentSoft = WithAlpha(BlendColor(accentColor, MediaColor.FromRgb(255, 255, 255), 0.78), 0x66);
+        var accentSoft = WithAlpha(BlendColor(accentColor, MediaColor.FromRgb(255, 255, 255), 0.72), 0x66);
         var labelColor = preset switch
         {
-            LauncherProfile.ThemePresetWhite => MediaColor.FromRgb(250, 250, 250),
-            LauncherProfile.ThemePresetRed => MediaColor.FromRgb(255, 176, 176),
-            _ => MediaColor.FromRgb(170, 208, 255)
+            LauncherProfile.ThemePresetWhite => MediaColor.FromRgb(255, 255, 255),
+            LauncherProfile.ThemePresetRed => MediaColor.FromRgb(255, 128, 128),
+            _ => MediaColor.FromRgb(159, 196, 255)
         };
         var glowSecondary = preset switch
         {
-            LauncherProfile.ThemePresetWhite => MediaColor.FromArgb(0x28, 255, 255, 255),
-            LauncherProfile.ThemePresetRed => MediaColor.FromArgb(0x2A, 255, 54, 54),
-            _ => MediaColor.FromArgb(0x2A, 15, 107, 255)
+            LauncherProfile.ThemePresetWhite => MediaColor.FromArgb(0x24, 255, 255, 255),
+            LauncherProfile.ThemePresetRed => MediaColor.FromArgb(0x30, 255, 43, 43),
+            _ => MediaColor.FromArgb(0x30, 15, 107, 255)
         };
         var glowPrimary = WithAlpha(accentColor, 0x26);
         var glowTertiary = WithAlpha(BlendColor(accentColor, MediaColor.FromRgb(255, 255, 255), 0.34), 0x20);
@@ -1673,9 +1700,9 @@ public partial class MainWindow : Window
         SetBrushColor("ThemeButtonBorderBrush", WithAlpha(accentColor, 0x72));
         SetBrushColor("ThemeCardBorderBrush", WithAlpha(accentColor, 0x3C));
 
-        WindowBackgroundStartStop.Color = MediaColor.FromRgb(4, 7, 11);
-        WindowBackgroundMiddleStop.Color = BlendColor(MediaColor.FromRgb(12, 17, 24), accentColor, 0.22);
-        WindowBackgroundEndStop.Color = MediaColor.FromRgb(1, 3, 5);
+        WindowBackgroundStartStop.Color = MediaColor.FromRgb(5, 7, 12);
+        WindowBackgroundMiddleStop.Color = BlendColor(MediaColor.FromRgb(13, 18, 29), accentColor, 0.18);
+        WindowBackgroundEndStop.Color = MediaColor.FromRgb(3, 5, 10);
 
         GlowPrimaryEllipse.Fill = new SolidColorBrush(glowPrimary);
         GlowSecondaryEllipse.Fill = new SolidColorBrush(glowSecondary);
@@ -1686,10 +1713,8 @@ public partial class MainWindow : Window
 
     private void SetBrushColor(string resourceKey, MediaColor color)
     {
-        if (Resources[resourceKey] is SolidColorBrush brush)
-        {
-            brush.Color = color;
-        }
+        var brush = new SolidColorBrush(color);
+        Resources[resourceKey] = brush;
     }
 
     private static MediaColor BlendColor(MediaColor baseColor, MediaColor mixColor, double ratio)
@@ -1802,7 +1827,7 @@ public partial class MainWindow : Window
         WindowModeBadgeTextBlock.Text = _isFullscreen
             ? "F11 para sair da tela cheia"
             : WindowState == WindowState.Maximized
-                ? "Janela clean maximizada"
+                ? "Janela maximizada"
                 : "F11 tela cheia";
         MaximizeWindowButton.Content = WindowState == WindowState.Maximized ? "[ ]" : "[]";
     }

@@ -11,26 +11,26 @@
         MinWidth="1180"
         MinHeight="760"
         WindowStartupLocation="CenterScreen"
-        Background="#08120F"
+        Background="#06080D"
         WindowStyle="None"
         ResizeMode="CanResize"
         WindowState="Maximized"
         PreviewKeyDown="Window_PreviewKeyDown"
         Loaded="Window_Loaded">
     <Window.Resources>
-        <SolidColorBrush x:Key="ThemePrimaryTextBrush" Color="#FFF7F7F0" />
-        <SolidColorBrush x:Key="ThemeMutedTextBrush" Color="#C7D7D0C6" />
-        <SolidColorBrush x:Key="ThemeLabelTextBrush" Color="#A6EDE1D0" />
-        <SolidColorBrush x:Key="ThemeCardBackgroundBrush" Color="#A9131D18" />
+        <SolidColorBrush x:Key="ThemePrimaryTextBrush" Color="#FFF7FAFF" />
+        <SolidColorBrush x:Key="ThemeMutedTextBrush" Color="#C6B7C3D3" />
+        <SolidColorBrush x:Key="ThemeLabelTextBrush" Color="#A69FC0FF" />
+        <SolidColorBrush x:Key="ThemeCardBackgroundBrush" Color="#B012141A" />
         <SolidColorBrush x:Key="ThemeCardBorderBrush" Color="#22FFFFFF" />
-        <SolidColorBrush x:Key="ThemeButtonBackgroundBrush" Color="#1A000000" />
+        <SolidColorBrush x:Key="ThemeButtonBackgroundBrush" Color="#140D1117" />
         <SolidColorBrush x:Key="ThemeButtonBorderBrush" Color="#30FFFFFF" />
         <SolidColorBrush x:Key="ThemeAccentBrush" Color="#0F6BFF" />
         <SolidColorBrush x:Key="ThemeAccentSoftBrush" Color="#550F6BFF" />
         <SolidColorBrush x:Key="ThemeFieldBackgroundBrush" Color="#FFF5F5F5" />
         <SolidColorBrush x:Key="ThemeFieldForegroundBrush" Color="#FF101010" />
         <SolidColorBrush x:Key="ThemeFieldBorderBrush" Color="#FFB8B8B8" />
-        <SolidColorBrush x:Key="ThemeListBackgroundBrush" Color="#16000000" />
+        <SolidColorBrush x:Key="ThemeListBackgroundBrush" Color="#120C1016" />
         <SolidColorBrush x:Key="ThemeListForegroundBrush" Color="#FFF5F4EC" />
         <Style x:Key="CardStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource ThemeCardBackgroundBrush}" />
@@ -110,16 +110,16 @@
     <Grid>
         <Grid.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop x:Name="WindowBackgroundStartStop" Color="#07110D" Offset="0" />
-                <GradientStop x:Name="WindowBackgroundMiddleStop" Color="#10281D" Offset="0.55" />
-                <GradientStop x:Name="WindowBackgroundEndStop" Color="#050B09" Offset="1" />
+                <GradientStop x:Name="WindowBackgroundStartStop" Color="#05070C" Offset="0" />
+                <GradientStop x:Name="WindowBackgroundMiddleStop" Color="#111827" Offset="0.55" />
+                <GradientStop x:Name="WindowBackgroundEndStop" Color="#04060A" Offset="1" />
             </LinearGradientBrush>
         </Grid.Background>
 
         <Canvas IsHitTestVisible="False">
-            <Ellipse x:Name="GlowPrimaryEllipse" Width="380" Height="380" Canvas.Left="-120" Canvas.Top="-120" Fill="#184DA3FF" />
-            <Ellipse x:Name="GlowSecondaryEllipse" Width="420" Height="420" Canvas.Right="-140" Canvas.Top="80" Fill="#123371FF" />
-            <Ellipse x:Name="GlowTertiaryEllipse" Width="280" Height="280" Canvas.Left="980" Canvas.Bottom="-60" Fill="#104DA3FF" />
+            <Ellipse x:Name="GlowPrimaryEllipse" Width="380" Height="380" Canvas.Left="-120" Canvas.Top="-120" Fill="#18437DFF" />
+            <Ellipse x:Name="GlowSecondaryEllipse" Width="420" Height="420" Canvas.Right="-140" Canvas.Top="80" Fill="#122B4FD8" />
+            <Ellipse x:Name="GlowTertiaryEllipse" Width="280" Height="280" Canvas.Left="980" Canvas.Bottom="-60" Fill="#10437DFF" />
         </Canvas>
 
         <Border x:Name="ShellBorder" Margin="0" Background="#F007100D" BorderBrush="#163C4843" BorderThickness="1" CornerRadius="0">
@@ -134,38 +134,80 @@
                         BorderBrush="#183C4843"
                         BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="TitleBarBorder_MouseLeftButtonDown">
-                    <DockPanel Margin="20,12">
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                            <Image Source="/Assets/bn-logo.png"
-                                   Width="30"
-                                   Height="30"
-                                   Margin="0,0,12,0"
-                                   Stretch="Uniform" />
-                            <TextBlock Text="Bn's Launcher"
-                                       Foreground="{DynamicResource ThemePrimaryTextBrush}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       FontFamily="Bahnschrift" />
-                            <Border Background="#16000000"
+                    <Grid Margin="20,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                            <Border Width="38"
+                                    Height="38"
+                                    CornerRadius="12"
+                                    Background="#16000000"
+                                    BorderBrush="#24FFFFFF"
+                                    BorderThickness="1"
+                                    Margin="0,0,14,0">
+                                <Image Source="/Assets/bn-logo.png"
+                                       Width="24"
+                                       Height="24"
+                                       Stretch="Uniform"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="Bn's Launcher"
+                                           Foreground="{DynamicResource ThemePrimaryTextBrush}"
+                                           FontSize="28"
+                                           FontWeight="Bold"
+                                           FontFamily="Bahnschrift" />
+                                <TextBlock Text="Vanilla, Forge, OptiFine e personalizacao rapida"
+                                           Foreground="{DynamicResource ThemeMutedTextBrush}"
+                                           FontSize="12" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <WrapPanel Grid.Column="1"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center">
+                            <Border Background="#12000000"
                                     BorderBrush="#24FFFFFF"
                                     BorderThickness="1"
                                     CornerRadius="999"
                                     Padding="12,6"
-                                    Margin="18,0,0,0">
-                                <TextBlock x:Name="WindowModeBadgeTextBlock"
-                                           Foreground="#FFE7D7BC"
-                                           FontSize="12"
+                                    Margin="0,0,10,0">
+                                <TextBlock Foreground="{DynamicResource ThemePrimaryTextBrush}"
+                                           Text="Offline e Microsoft" />
+                            </Border>
+                            <Border Background="#12000000"
+                                    BorderBrush="#24FFFFFF"
+                                    BorderThickness="1"
+                                    CornerRadius="999"
+                                    Padding="12,6"
+                                    Margin="0,0,10,0">
+                                <TextBlock Foreground="{DynamicResource ThemePrimaryTextBrush}"
+                                           Text="Temas rapidos" />
+                            </Border>
+                            <Border Background="#12000000"
+                                    BorderBrush="#24FFFFFF"
+                                    BorderThickness="1"
+                                    CornerRadius="999"
+                                    Padding="12,6">
+                                <TextBlock Foreground="{DynamicResource ThemePrimaryTextBrush}"
                                            Text="F11 tela cheia" />
                             </Border>
-                        </StackPanel>
+                            <TextBlock x:Name="WindowModeBadgeTextBlock"
+                                       Visibility="Collapsed" />
+                        </WrapPanel>
 
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Grid.Column="2" VerticalAlignment="Center">
                             <Button Content="F11" Click="FullscreenButton_Click" Style="{StaticResource ChromeButtonStyle}" />
                             <Button Content="_" Click="MinimizeButton_Click" Style="{StaticResource ChromeButtonStyle}" />
                             <Button x:Name="MaximizeWindowButton" Content="[]" Click="MaximizeWindowButton_Click" Style="{StaticResource ChromeButtonStyle}" />
                             <Button Content="X" Click="CloseWindowButton_Click" Style="{StaticResource ChromeButtonStyle}" Margin="0" />
                         </StackPanel>
-                    </DockPanel>
+                    </Grid>
                 </Border>
 
                 <Grid Grid.Row="1">
@@ -224,8 +266,8 @@
 
                     <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="24">
-                            <TextBlock Text="Monte o launcher do seu jeito" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="34" FontWeight="Bold" FontFamily="Bahnschrift" />
-                            <TextBlock Text="Agora com perfis independentes, lista de instancias, conta original Microsoft, modo offline e feed da Mojang." Foreground="{DynamicResource ThemeMutedTextBrush}" TextWrapping="Wrap" Margin="0,10,0,22" />
+                            <TextBlock Text="Jogar rapido, personalizar facil" Foreground="{DynamicResource ThemePrimaryTextBrush}" FontSize="34" FontWeight="Bold" FontFamily="Bahnschrift" />
+                            <TextBlock Text="Monte o launcher do seu jeito, troque tema sem travar e escolha a melhor combinacao entre Vanilla, Forge e OptiFine." Foreground="{DynamicResource ThemeMutedTextBrush}" TextWrapping="Wrap" Margin="0,10,0,22" />
 
                             <WrapPanel Margin="0,0,0,12">
                                 <Border Background="#1DFFFFFF" BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="999" Padding="14,8" Margin="0,0,10,10"><TextBlock x:Name="HeaderProfileBadgeTextBlock" Foreground="{DynamicResource ThemePrimaryTextBrush}" Text="Perfil principal" /></Border>
@@ -304,6 +346,12 @@
                                             <ComboBoxItem Content="preto + vermelho" />
                                             <ComboBoxItem Content="custom" />
                                         </ComboBox>
+                                        <WrapPanel Margin="0,0,0,14">
+                                            <Button Content="Azul forte" Tag="preto + azul" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
+                                            <Button Content="Branco forte" Tag="preto + branco" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
+                                            <Button Content="Vermelho forte" Tag="preto + vermelho" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
+                                            <Button Content="Custom" Tag="custom" Click="ThemeQuickButton_Click" Style="{StaticResource ActionButtonStyle}" />
+                                        </WrapPanel>
                                         <TextBlock Text="Cor de destaque" Foreground="{DynamicResource ThemeLabelTextBrush}" Margin="0,0,0,8" />
                                         <Grid Margin="0,0,0,14">
                                             <Grid.ColumnDefinitions>
