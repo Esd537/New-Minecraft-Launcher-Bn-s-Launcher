@@ -1,6 +1,6 @@
 # Bn's Launcher
 
-Launcher de Minecraft em WPF inspirado na ideia de launchers como o Freesm, com visual clean, suporte a versoes oficiais, perfis, instancias separadas e personalizacao dentro do proprio app.
+Launcher de Minecraft inspirado na ideia de launchers como o Freesm, com visual clean, suporte a versoes oficiais, perfis, instancias separadas e personalizacao dentro do proprio app.
 
 ## O que ja esta funcionando
 
