@@ -19,9 +19,9 @@ Launcher de Minecraft inspirado na ideia de launchers como o Freesm, com visual 
 ## Arquivos principais
 
 - App: `Bn Launcher App v1.2.0\Bn's Launcher.exe`
-- Instalador: `release\BnsLauncher-Setup-v1.2.0.exe`
-- Portatil: `release\BnsLauncher-v1.2.0-win-x64.zip`
-- Notas da release: `release\RELEASE_NOTES_v1.2.0.md`
+- Instalador: `release\BnsLauncher-Setup-V.beta.1.2.exe`
+- Portatil: `release\BnsLauncher-V.beta.1.2-win-x64.zip`
+- Notas da release: `release\RELEASE_NOTES_V.beta.1.2.md`
 
 ## Como abrir
 
@@ -37,9 +37,9 @@ Launcher de Minecraft inspirado na ideia de launchers como o Freesm, com visual 
 
 - O repositorio recebe o codigo-fonte.
 - Os binarios grandes vao na aba `Releases`.
-- Para publicar a release, envie `BnsLauncher-Setup-v1.2.0.exe` ou `BnsLauncher-v1.2.0-win-x64.zip`.
+- Para publicar a release, envie `BnsLauncher-Setup-V.beta.1.2.exe` ou `BnsLauncher-V.beta.1.2-win-x64.zip`.
 
 ## Nome da release
 
-- Nome publico da release: `V.beta.1.1.1`
+- Nome publico da release: `V.beta.1.2`
 - Os nomes dos arquivos continuam em `v1.2.0`
