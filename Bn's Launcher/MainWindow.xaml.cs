@@ -254,6 +254,24 @@ public partial class MainWindow : Window
 
     private static string ReadComboText(WpfComboBox comboBox, string fallback)
     {
+        if (comboBox.SelectedItem is ComboBoxItem selectedItem)
+        {
+            var selectedValue = selectedItem.Content?.ToString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(selectedValue))
+            {
+                return selectedValue;
+            }
+        }
+
+        if (comboBox.SelectedValue is not null)
+        {
+            var selectedValue = comboBox.SelectedValue.ToString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(selectedValue))
+            {
+                return selectedValue;
+            }
+        }
+
         var value = comboBox.Text?.Trim();
         return string.IsNullOrWhiteSpace(value) ? fallback : value;
     }
@@ -265,16 +283,18 @@ public partial class MainWindow : Window
 
     private static void SelectComboValue(WpfComboBox comboBox, string value)
     {
-        comboBox.Text = value;
+        comboBox.SelectedIndex = -1;
 
         foreach (var item in comboBox.Items.OfType<ComboBoxItem>())
         {
             if (string.Equals(item.Content?.ToString(), value, StringComparison.OrdinalIgnoreCase))
             {
                 comboBox.SelectedItem = item;
-                break;
+                return;
             }
         }
+
+        comboBox.Text = value;
     }
 
     private static void SelectBuildValue(WpfComboBox comboBox, string value)
@@ -501,11 +521,12 @@ public partial class MainWindow : Window
         CustomVersionIdTextBox.Opacity = isCustom ? 1 : 0.56;
         VersionTypeComboBox.IsEnabled = !isCustom;
         VersionTypeComboBox.Opacity = isCustom ? 0.56 : 1;
-        OpenVersionsButton.IsEnabled = !isCustom;
-        OpenVersionsButton.Opacity = isCustom ? 0.56 : 1;
+        OpenVersionsButton.IsEnabled = true;
+        OpenVersionsButton.Opacity = 1;
+        OpenVersionsButton.Content = isCustom ? "Versoes locais" : "Catalogo de versoes";
 
         CustomVersionHintTextBlock.Text = isCustom
-            ? "Digite o ID exato de uma versao local que ja exista na pasta versions da instancia ativa."
+            ? "Use o botao ao lado para ler a pasta versions da instancia ativa, ou digite o ID exato manualmente."
             : "Use o catalogo para baixar e selecionar versoes oficiais da Mojang.";
     }
 
@@ -815,11 +836,13 @@ public partial class MainWindow : Window
         ApplyEditorsToCurrentModels();
         if (_currentInstance is not null && IsCustomVersionMode(_currentInstance))
         {
-            WpfMessageBox.Show(
-                "No modo custom/local voce digita o ID da versao manualmente. Troque para catalogo oficial se quiser usar a lista da Mojang.",
-                "Bn's Launcher",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            var localVersionId = PickLocalVersionId(_currentInstance);
+            if (!string.IsNullOrWhiteSpace(localVersionId))
+            {
+                CustomVersionIdTextBox.Text = localVersionId;
+                SetStatus($"Versao local selecionada: {localVersionId}.");
+            }
+
             return;
         }
 
@@ -840,6 +863,103 @@ public partial class MainWindow : Window
 
             _ = RefreshLoaderCatalogAsync(true);
         }
+    }
+
+    private string? PickLocalVersionId(LauncherInstance instance)
+    {
+        var versionsDirectory = Path.Combine(instance.GameDirectory, "versions");
+        if (!Directory.Exists(versionsDirectory))
+        {
+            WpfMessageBox.Show(
+                $"Nao encontrei a pasta versions em:{Environment.NewLine}{versionsDirectory}{Environment.NewLine}{Environment.NewLine}Coloque a sua versao nessa pasta primeiro.",
+                "Bn's Launcher",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return null;
+        }
+
+        var versions = Directory
+            .EnumerateDirectories(versionsDirectory)
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name!)
+            .Where(name => File.Exists(Path.Combine(versionsDirectory, name, $"{name}.json")))
+            .OrderByDescending(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (versions.Count == 0)
+        {
+            WpfMessageBox.Show(
+                $"A pasta versions existe, mas nao encontrei nenhuma versao valida nela:{Environment.NewLine}{versionsDirectory}{Environment.NewLine}{Environment.NewLine}Cada versao precisa ter uma pasta com um arquivo .json do mesmo nome.",
+                "Bn's Launcher",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return null;
+        }
+
+        if (versions.Count == 1)
+        {
+            return versions[0];
+        }
+
+        using var form = new WinForms.Form
+        {
+            Text = "Escolher versao local",
+            StartPosition = WinForms.FormStartPosition.CenterParent,
+            Width = 420,
+            Height = 520,
+            FormBorderStyle = WinForms.FormBorderStyle.FixedDialog,
+            MaximizeBox = false,
+            MinimizeBox = false
+        };
+
+        var infoLabel = new WinForms.Label
+        {
+            Text = "Escolha a versao encontrada na pasta versions:",
+            Left = 16,
+            Top = 16,
+            Width = 360,
+            Height = 24
+        };
+
+        var listBox = new WinForms.ListBox
+        {
+            Left = 16,
+            Top = 48,
+            Width = 368,
+            Height = 360
+        };
+        listBox.Items.AddRange(versions.Cast<object>().ToArray());
+        listBox.SelectedIndex = 0;
+
+        var okButton = new WinForms.Button
+        {
+            Text = "Usar",
+            Left = 214,
+            Top = 424,
+            Width = 80,
+            DialogResult = WinForms.DialogResult.OK
+        };
+
+        var cancelButton = new WinForms.Button
+        {
+            Text = "Cancelar",
+            Left = 304,
+            Top = 424,
+            Width = 80,
+            DialogResult = WinForms.DialogResult.Cancel
+        };
+
+        form.Controls.Add(infoLabel);
+        form.Controls.Add(listBox);
+        form.Controls.Add(okButton);
+        form.Controls.Add(cancelButton);
+        form.AcceptButton = okButton;
+        form.CancelButton = cancelButton;
+
+        return form.ShowDialog() == WinForms.DialogResult.OK
+            ? listBox.SelectedItem?.ToString()
+            : null;
     }
 
     private async void MicrosoftLoginButton_Click(object sender, RoutedEventArgs e)
